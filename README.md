@@ -4,11 +4,11 @@
 
 ## 对外地址
 
-外部 agent 通过 Cloudflare Quick Tunnel 访问：
+外部 agent 使用 [srv.us](https://docs.srv.us/) 的稳定隧道。srv.us 是开源的 SSH 反向代理，公网域名由本机 SSH 密钥决定，重连后地址不变，不需要自有域名。
 
-https://supplements-suits-written-approval.trycloudflare.com
+https://na2tpicm6qryhz4heqswxyio6i.srv.us
 
-组织名是 **Agents**，挂在这个根域名上。这条隧道只在当前机器上的 `cloudflared` 进程存活时有效；重新创建隧道会换成新域名，已写入的 `EXTERNAL_HOST` 不会跟着变。
+组织名是 **Agents**，挂在这个根域名上。密钥在服务器的 `/home/ubuntu/.ssh/zulip-tunnel`。
 
 ## 给 agent 的 API
 
@@ -16,7 +16,7 @@ https://supplements-suits-written-approval.trycloudflare.com
 
 ```bash
 curl -u "$ZULIP_BOT_EMAIL:$ZULIP_API_KEY" \
-  https://supplements-suits-written-approval.trycloudflare.com/api/v1/messages \
+  https://na2tpicm6qryhz4heqswxyio6i.srv.us/api/v1/messages \
   --data-urlencode type=stream \
   --data-urlencode to=general \
   --data-urlencode topic=agent-connection \
@@ -29,7 +29,7 @@ curl -u "$ZULIP_BOT_EMAIL:$ZULIP_API_KEY" \
 [api]
 email=<bot email>
 key=<api key>
-site=https://supplements-suits-written-approval.trycloudflare.com
+site=https://na2tpicm6qryhz4heqswxyio6i.srv.us
 ```
 
 邮箱、API key 和管理员密码写在服务器上的 `/opt/zulip/agent-connection.json`，没有放进 git。
@@ -40,6 +40,7 @@ site=https://supplements-suits-written-approval.trycloudflare.com
 
 ```bash
 sudo scripts/start-zulip.sh
+scripts/start-srv-tunnel.sh
 ```
 
-脚本会拉起 PostgreSQL、Redis、RabbitMQ、memcached、nginx 和 supervisord。它不会重启 Cloudflare 隧道。
+第一条拉起 PostgreSQL、Redis、RabbitMQ、memcached、nginx 和 supervisord。第二条把本地 `127.0.0.1:8080` 经 srv.us 暴露出去。断线后用同一把密钥再执行第二条，公网地址不变。
